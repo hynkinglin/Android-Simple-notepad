@@ -37,7 +37,6 @@ public class Notepadv3 extends ListActivity {
     private static final int INSERT_ID = Menu.FIRST;
     private static final int DELETE_ID = Menu.FIRST + 1;
     private static final int SHARE_ID = Menu.FIRST + 2;
-
     private NotesDbAdapter mDbHelper;
     /**
      * Called when the activity is first created.

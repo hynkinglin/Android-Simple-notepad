@@ -87,7 +87,6 @@ public class NoteEdit extends Activity {
                 mRowId = extras.getLong(NotesDbAdapter.KEY_ROWID);
             }
         }
-
 //        mRowId = null;
 //        Bundle extras = getIntent().getExtras();
 //        if (extras != null) {
