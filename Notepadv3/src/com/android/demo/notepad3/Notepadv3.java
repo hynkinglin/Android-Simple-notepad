@@ -19,26 +19,29 @@ package com.android.demo.notepad3;
 import android.app.ListActivity;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.ContextMenu;
+import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ContextMenu.ContextMenuInfo;
+import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
-import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class Notepadv3 extends ListActivity {
-    private static final int ACTIVITY_CREATE=0;
-    private static final int ACTIVITY_EDIT=1;
+    private static final int ACTIVITY_CREATE = 0;
+    private static final int ACTIVITY_EDIT = 1;
 
     private static final int INSERT_ID = Menu.FIRST;
     private static final int DELETE_ID = Menu.FIRST + 1;
-
+    private static final int SHARE_ID = Menu.FIRST + 2;
     private NotesDbAdapter mDbHelper;
 
-    /** Called when the activity is first created. */
+    /**
+     * Called when the activity is first created.
+     */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,8 +64,8 @@ public class Notepadv3 extends ListActivity {
         int[] to = new int[]{R.id.text1};
 
         // Now create a simple cursor adapter and set it to display
-        SimpleCursorAdapter notes = 
-            new SimpleCursorAdapter(this, R.layout.notes_row, notesCursor, from, to);
+        SimpleCursorAdapter notes =
+                new SimpleCursorAdapter(this, R.layout.notes_row, notesCursor, from, to);
         setListAdapter(notes);
     }
 
@@ -75,13 +78,8 @@ public class Notepadv3 extends ListActivity {
 
     @Override
     public boolean onMenuItemSelected(int featureId, MenuItem item) {
-//        switch(item.getItemId()) {
-//            case INSERT_ID:
-//                createNote();
-//                return true;
-//        }
-        if(item.getItemId() == INSERT_ID)
-        {
+
+        if (item.getItemId() == INSERT_ID) {
             createNote();
             return true;
         }
@@ -91,19 +89,29 @@ public class Notepadv3 extends ListActivity {
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v,
-            ContextMenuInfo menuInfo) {
+                                    ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
         menu.add(0, DELETE_ID, 0, R.string.menu_delete);
+        menu.add(0, SHARE_ID, 0, R.string.menu_share);
     }
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
-        switch(item.getItemId()) {
-            case DELETE_ID:
-                AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-                mDbHelper.deleteNote(info.id);
-                fillData();
-                return true;
+
+        if (item.getItemId() == DELETE_ID) {
+            AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+            mDbHelper.deleteNote(info.id);
+            fillData();
+            return true;
+        } else if (item.getItemId() == SHARE_ID) {
+            AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+            Cursor cursor = mDbHelper.fetchNote(info.id);
+
+            shareNote(cursor);
+
+            cursor.close();
+
+
         }
         return super.onContextItemSelected(item);
     }
@@ -111,6 +119,21 @@ public class Notepadv3 extends ListActivity {
     private void createNote() {
         Intent i = new Intent(this, NoteEdit.class);
         startActivityForResult(i, ACTIVITY_CREATE);
+    }
+
+    private void shareNote(Cursor cursor) {
+
+
+        String fileName = cursor.getString(cursor.getColumnIndex("title"));
+        //String fileContent = cursor.getString(cursor.getColumnIndex("body"));
+
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_STREAM,
+                Uri.parse("file://" + NoteEdit.FULL_PATH + "/" + fileName + ".txt"));
+        startActivity(Intent.createChooser(intent, ""));
+
+
     }
 
 
