@@ -17,46 +17,29 @@
 package com.android.demo.notepad3;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.Menu;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
 public class NoteEdit extends Activity {
 
-    public static final String FULL_PATH = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Notepad";
     private EditText mTitleText;
     private EditText mBodyText;
     private Long mRowId;
+
     private NotesDbAdapter mDbHelper;
-
-    public static void export(String fileName, String fileContent) {
-
-        try {
-            File dir = new File(FULL_PATH);
-            if (!dir.exists()) {
-                dir.mkdirs();
-            }
-            OutputStream fOut = null;
-            File file = new File(FULL_PATH, fileName + ".txt");
-
-            file.createNewFile();
-            fOut = new FileOutputStream(file);
-            fOut.write(fileContent.getBytes());
-            fOut.flush();
-            fOut.close();
-        } catch (Exception e) {
-            Log.e("saveToExternalStorage()", e.getMessage());
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,21 +55,25 @@ public class NoteEdit extends Activity {
         mBodyText = (EditText) findViewById(R.id.body);
 
         Button confirmButton = (Button) findViewById(R.id.confirm);
-
+        //TODO add a share button
         Button shareButton = (Button) findViewById(R.id.share);
 
         mRowId = null;
-        if (savedInstanceState != null) {
+        if(savedInstanceState != null)
+        {
             mRowId = savedInstanceState.getLong(NotesDbAdapter.KEY_ROWID);
 
         }
 
-        if (mRowId == null) {
+        if(mRowId == null)
+        {
             Bundle extras = getIntent().getExtras();
-            if (extras != null) {
+            if(extras != null)
+            {
                 mRowId = extras.getLong(NotesDbAdapter.KEY_ROWID);
             }
         }
+
 //        mRowId = null;
 //        Bundle extras = getIntent().getExtras();
 //        if (extras != null) {
@@ -100,6 +87,7 @@ public class NoteEdit extends Activity {
 //            if (body != null) {
 //                mBodyText.setText(body);
 //            }
+
 
         confirmButton.setOnClickListener(new View.OnClickListener() {
 
@@ -132,8 +120,18 @@ public class NoteEdit extends Activity {
 
     }
 
-    private void populateFields() {
-        if (mRowId != null) {
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu) {
+//
+//        getMenuInflater().inflate(R.menu.edit_share,menu);
+//
+//        return super.onCreateOptionsMenu(menu);
+//    }
+
+    private void populateFields()
+    {
+        if(mRowId != null)
+        {
             Cursor note = mDbHelper.fetchNote(mRowId);
             startManagingCursor(note);
             mTitleText.setText(note.getString(
@@ -146,40 +144,93 @@ public class NoteEdit extends Activity {
         }
     }
 
+
     @Override
-    protected void onSaveInstanceState(Bundle bundle) {
+    protected void onSaveInstanceState(Bundle bundle)
+    {
         super.onSaveInstanceState(bundle);
         saveData();
-        bundle.putLong(NotesDbAdapter.KEY_ROWID, mRowId);
+        bundle.putLong(NotesDbAdapter.KEY_ROWID,mRowId);
     }
 
     @Override
-    protected void onPause() {
+    protected void onPause()
+    {
         super.onPause();
         saveData();
     }
 
     @Override
-    protected void onResume() {
+    protected void onResume()
+    {
         super.onResume();
         populateFields();
     }
 
-    private void saveData() {
+    private void saveData()
+    {
         String title = mTitleText.getText().toString();
         String body = mBodyText.getText().toString();
 
-        if (mRowId == null) {
-            long id = mDbHelper.createNote(title, body);
-            if (id > 0) {
+        if (mRowId == null)
+        {
+            long id = mDbHelper.createNote(title,body);
+            if(id >0)
+            {
                 mRowId = id;
             }
 
 
-        } else
-            mDbHelper.updateNote(mRowId, title, body);
-        export(title, body);
+        }
+        else
+            mDbHelper.updateNote(mRowId,title,body);
+        export(title,body);
+    }
+
+    private void export(String fileName, String fileContent)
+    {
+        String fullPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/Document";
+        try
+        {
+            File dir = new File(fullPath);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+            OutputStream fOut = null;
+            File file = new File(fullPath, fileName+".txt");
+
+            file.createNewFile();
+            fOut = new FileOutputStream(file);
+            fOut.write(fileContent.getBytes());
+            fOut.flush();
+            fOut.close();
+        }
+        catch (Exception e)
+        {
+            Log.e("saveToExternalStorage()", e.getMessage());
+        }
+//        FileOutputStream outputStream;
+//
+//        try
+//        {
+//            outputStream = openFileOuput(fileName, Context.MODE_PRIVATE);
+//            outputStream.write(fileContent.getBytes());
+//            outputStream.close();
+//        }
+//        catch(Exception e)
+//        {
+//            e.printStackTrace();
+//        }
     }
 
 
+    public boolean isExternalStorageWritable()
+    {
+        String state = Environment.getExternalStorageState();
+        if(Environment.MEDIA_MOUNTED.equals(state))
+        {
+            return true;
+        }
+        return false;
+    }
 }
