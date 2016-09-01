@@ -19,8 +19,11 @@ package com.android.demo.notepad3;
 import android.app.Activity;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Environment;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -37,6 +40,7 @@ public class NoteEdit extends Activity {
     private EditText mBodyText;
     private Long mRowId;
     private NotesDbAdapter mDbHelper;
+    private Drawable error_indicator;
 
     public static void export(String fileName, String fileContent) {
 
@@ -70,16 +74,20 @@ public class NoteEdit extends Activity {
 
         mTitleText = (EditText) findViewById(R.id.title);
         mBodyText = (EditText) findViewById(R.id.body);
+        error_indicator = getResources().getDrawable(R.drawable.indicator_input_error);
 
-        Button confirmButton = (Button) findViewById(R.id.confirm);
 
-        Button shareButton = (Button) findViewById(R.id.share);
+//
+//        mTitleText.setOnEditorActionListener(new EmptyTextListener(mTitleText));
+//        mBodyText.setOnEditorActionListener(new EmptyTextListener(mBodyText));
+
+
+        final Button confirmButton = (Button) findViewById(R.id.confirm);
+
+        final Button shareButton = (Button) findViewById(R.id.share);
 
         mRowId = null;
-        if (savedInstanceState != null) {
-            mRowId = savedInstanceState.getLong(NotesDbAdapter.KEY_ROWID);
 
-        }
 
         if (mRowId == null) {
             Bundle extras = getIntent().getExtras();
@@ -101,12 +109,47 @@ public class NoteEdit extends Activity {
 //                mBodyText.setText(body);
 //            }
 
+        mTitleText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (mTitleText.getText().toString().length() == 0) {
+                    // TODO to alert the user with error when title is empty
+                    confirmButton.setEnabled(false);
+                    shareButton.setEnabled(false);
+                } else {
+                    confirmButton.setEnabled(true);
+                    shareButton.setEnabled(true);
+                }
+
+
+            }
+
+
+        });
+
+        if (mTitleText.getText().toString().length() == 0) {
+            confirmButton.setEnabled(false);
+            shareButton.setEnabled(false);
+        }
+
         confirmButton.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
 
+
                 setResult(RESULT_OK);
                 finish();
+
             }
 
         });
@@ -132,13 +175,16 @@ public class NoteEdit extends Activity {
 
     }
 
+
     private void populateFields() {
         if (mRowId != null) {
             Cursor note = mDbHelper.fetchNote(mRowId);
             startManagingCursor(note);
+
             mTitleText.setText(note.getString(
                     note.getColumnIndexOrThrow(NotesDbAdapter.KEY_TITLE)
             ));
+
 
             mBodyText.setText(note.getString(
                     note.getColumnIndexOrThrow(NotesDbAdapter.KEY_BODY)
@@ -169,6 +215,7 @@ public class NoteEdit extends Activity {
         String title = mTitleText.getText().toString();
         String body = mBodyText.getText().toString();
 
+
         if (mRowId == null) {
             long id = mDbHelper.createNote(title, body);
             if (id > 0) {
@@ -183,3 +230,64 @@ public class NoteEdit extends Activity {
 
 
 }
+
+//public class EmptyTextListener implements TextView.OnEditorActionListener {
+//    private EditText et;
+//
+//    public EmptyTextListener(EditText editText) {
+//        this.et = editText;
+//    }
+//
+//    @Override
+//    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+//
+//        if (actionId == EditorInfo.IME_ACTION_NEXT) {
+//            // Called when user press Next button on the soft keyboard
+//
+//            if (et.getText().toString().equals(""))
+//                et.setError("Oops! empty.", error_indicator);
+//        }
+//        return false;
+//    }
+//}
+
+//public class InputValidator implements TextWatcher {
+//    private EditText et;
+//
+//    private InputValidator(EditText editText) {
+//        this.et = editText;
+//    }
+//
+//    @Override
+//    public void afterTextChanged(Editable s) {
+//
+//    }
+//
+//    @Override
+//    public void beforeTextChanged(CharSequence s, int start, int count,
+//                                  int after) {
+//
+//    }
+//
+//    @Override
+//    public void onTextChanged(CharSequence s, int start, int before,
+//                              int count) {
+//        if (s.length() != 0) {
+//            switch (et.getId()) {
+//                case R.id.etUsername: {
+//                    if (!Pattern.matches("^[a-z]{1,16}$", s)) {
+//                        et.setError("Oops! Username must have only a-z");
+//                    }
+//                }
+//                break;
+//
+//                case R.id.etPassword: {
+//                    if (!Pattern.matches("^[a-zA-Z]{1,16}$", s)) {
+//                        et.setError("Oops! Password must have only a-z and A-Z");
+//                    }
+//                }
+//                break;
+//            }
+//        }
+//    }
+//}
