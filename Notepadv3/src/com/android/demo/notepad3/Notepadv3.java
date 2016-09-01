@@ -37,6 +37,7 @@ public class Notepadv3 extends ListActivity {
     private static final int INSERT_ID = Menu.FIRST;
     private static final int DELETE_ID = Menu.FIRST + 1;
     private static final int SHARE_ID = Menu.FIRST + 2;
+    private static final int EDIT_ID = Menu.FIRST + 3;
     private NotesDbAdapter mDbHelper;
 
     /**
@@ -50,6 +51,12 @@ public class Notepadv3 extends ListActivity {
         mDbHelper.open();
         fillData();
         registerForContextMenu(getListView());
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
     }
 
     private void fillData() {
@@ -73,6 +80,7 @@ public class Notepadv3 extends ListActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
         menu.add(0, INSERT_ID, 0, R.string.menu_insert);
+        menu.add(0, DELETE_ID, 0, "Delete All");
         return true;
     }
 
@@ -81,6 +89,9 @@ public class Notepadv3 extends ListActivity {
 
         if (item.getItemId() == INSERT_ID) {
             createNote();
+            return true;
+        } else if (item.getItemId() == DELETE_ID) {
+            deleteAllNote();
             return true;
         }
 
@@ -93,25 +104,29 @@ public class Notepadv3 extends ListActivity {
         super.onCreateContextMenu(menu, v, menuInfo);
         menu.add(0, DELETE_ID, 0, R.string.menu_delete);
         menu.add(0, SHARE_ID, 0, R.string.menu_share);
+        menu.add(0, EDIT_ID, 0, "Edit Note");
     }
 
     @Override
     public boolean onContextItemSelected(MenuItem item) {
 
+        AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
         if (item.getItemId() == DELETE_ID) {
-            AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
+
             mDbHelper.deleteNote(info.id);
             fillData();
+
             return true;
         } else if (item.getItemId() == SHARE_ID) {
-            AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
             Cursor cursor = mDbHelper.fetchNote(info.id);
 
             shareNote(cursor);
 
             cursor.close();
-
-
+        } else if (item.getItemId() == EDIT_ID) {
+            Intent i = new Intent(this, NoteEdit.class);
+            i.putExtra(NotesDbAdapter.KEY_ROWID, info.id);
+            startActivityForResult(i, ACTIVITY_EDIT);
         }
         return super.onContextItemSelected(item);
     }
@@ -119,6 +134,11 @@ public class Notepadv3 extends ListActivity {
     private void createNote() {
         Intent i = new Intent(this, NoteEdit.class);
         startActivityForResult(i, ACTIVITY_CREATE);
+    }
+
+    private void deleteAllNote() {
+        mDbHelper.deleteAllNote();
+        fillData();
     }
 
     private void shareNote(Cursor cursor) {
@@ -155,6 +175,7 @@ public class Notepadv3 extends ListActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
         fillData();
+
 //        Bundle extras = intent.getExtras();
 //        switch(requestCode) {
 //            case ACTIVITY_CREATE:
