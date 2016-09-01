@@ -72,7 +72,7 @@ public class NoteEdit extends Activity {
         mBodyText = (EditText) findViewById(R.id.body);
 
         Button confirmButton = (Button) findViewById(R.id.confirm);
-        //TODO add a share button
+
         Button shareButton = (Button) findViewById(R.id.share);
 
         mRowId = null;
