@@ -102,7 +102,6 @@ public class NoteEdit extends Activity {
 //                mBodyText.setText(body);
 //            }
 
-
         confirmButton.setOnClickListener(new View.OnClickListener() {
 
             public void onClick(View view) {
